@@ -1,0 +1,8 @@
+*~
+*.bak
+*.swp
+*.swo
+*.phtml.php
+*.class
+Thumbs.db
+logs/*
