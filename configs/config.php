@@ -17,4 +17,12 @@ return new \Phalcon\Config(array(
     'host' => array(
         'static' => 'http://192.168.14.90'
     ),
+    'redis' => array(
+        'host' => 'redis',
+        'port' => 6379,
+        'timeout' => 2.5,
+        'db' => 1,
+        'password' => NULL,
+        'keyprefix' => 'PHALCON:',
+    ),
 ));

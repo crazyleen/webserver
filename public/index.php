@@ -68,6 +68,21 @@ $di->setShared('session', function() {
     return $session;
 });
 
+$di->setShared('redis', function() use($config) {
+
+    $redis = new \Redis();
+    $redis->pconnect($config->redis->host, $config->redis->port, $config->redis->timeout);
+    $redis->select($config->redis->db);
+
+    if ($config->redis->keyprefix)
+        $redis->setOption(Redis::OPT_PREFIX, $config->redis->keyprefix);
+
+    if ($config->redis->password)
+        $redis->auth($config->redis->password);
+
+    return $redis;
+});
+
 try {
 $app = new Application($di);
 
