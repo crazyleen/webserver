@@ -2,6 +2,8 @@
 
 namespace Dlp\Controllers;
 
+use \Dlp\Plugins\Aes;
+
 class TokenController extends ResponseController {
 	private $tokenpankey = "token:";
 	/**
@@ -30,8 +32,10 @@ class TokenController extends ResponseController {
 				"token" => $token,
 				"pan" => $pan 
 		);
-		$this->responseJson ( $rst );
+		$this->responseJson($rst);
+		//echo Aes::encode($this->posp->key, json_encode($rst));
 	}
+	
 	public function updateAction() {
 		$token = false;
 		$pan = $this->request->get ( "pan" );

@@ -14,6 +14,7 @@ $di = new FactoryDefault();
 $di->set('host', $config->host);
 $di->set('path', $config->path);
 $di->set('config_db', $config->db);
+$di->set('posp', $config->posp);
 
 $base_db_list = array('test');
 foreach ($base_db_list as $db_name) {

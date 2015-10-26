@@ -25,4 +25,8 @@ return new \Phalcon\Config(array(
         'password' => NULL,
         'keyprefix' => 'PHALCON:HCE:',
     ),
+		
+	'posp' => array(
+			'key' => 'Key4TokenQueryTobestpayPospSwitch',
+	),
 ));

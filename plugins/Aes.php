@@ -1,6 +1,6 @@
 <?php
 
-namespace HCE\Plugins;
+namespace Dlp\Plugins;
 
 /**
  * 使用AES加密
