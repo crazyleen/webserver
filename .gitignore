@@ -6,3 +6,5 @@
 *.class
 Thumbs.db
 logs/*
+*.volt.php
+.*
