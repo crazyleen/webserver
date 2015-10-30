@@ -29,7 +29,7 @@ class StrRand {
         }
         return $data;
     }
-    
+       
     /**
      * 生成核销码 8位
      *

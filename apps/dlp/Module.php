@@ -18,7 +18,7 @@ class Module implements \Phalcon\Mvc\ModuleDefinitionInterface {
 
         $config_db = $di->get('config_db');
 
-        $db_list = array('weixin', 'device', 'application');
+        $db_list = array('hce');
         foreach ($db_list as $db_name) {
             $di->set('db_' . $db_name, function() use($config_db, $db_name) {
                 return new \Phalcon\Db\Adapter\Pdo\Mysql(array(

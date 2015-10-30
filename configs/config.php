@@ -11,7 +11,8 @@ return new \Phalcon\Config(array(
             'host'     => 'guang-mysql',
             'username' => 'root',
             'password' => 'rootguang',
-            'charset'  => 'utf8'
+            'charset'  => 'utf8',
+            'dbname' => 'hce',
         )
     ),
     'host' => array(

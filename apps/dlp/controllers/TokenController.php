@@ -1,6 +1,9 @@
 <?php
 namespace Dlp\Controllers;
 use \Dlp\Plugins\Aes;
+use \Dlp\Plugins\StrRand;
+use Dlp\Models\HceUser;
+use Dlp\Models\HceClient;
 
 class TokenController extends ResponseController
 {
@@ -25,11 +28,14 @@ class TokenController extends ResponseController
         // TODO: ip white list
         $pan = false;
         $token = $this->request->get("token");
-        $key = $this->tokenpankey . $token;
-        if ($token)
+        if ($token) {
+            $key = $this->tokenKey($token);
             $pan = $this->redis->get($key);
-        if ($pan)
-            $this->redis->delete($key);
+            
+            //token被使用后必须3s内失效（防止网络不好posp重新查询）
+            if ($this->redis->ttl($key) > 3)
+                $this->redis->setTimeout($key, 3);
+        }
         
         $rst = array(
                 "token" => $token,
@@ -42,29 +48,39 @@ class TokenController extends ResponseController
     public function updateAction ()
     {
         $token = false;
-        $pan = $this->request->get("pan");
+        $accesstoken = $this->request->get("accesstoken");
+        $token = $this->setToken($accesstoken);  
+
         $rst = array();
-        $rst['pan'] = $pan;
-        $rst['token'] = null;
-        $rst['used'] = 0;
-        if ($pan) {
-            for ($i = 0; $i < 10000; $i ++) {
-                $token = $this->getToken($pan);
-                $key = $this->tokenpankey . $token;
-                if ($this->redis->setnx($key, $pan)) {
-                    $this->redis->setTimeout($key, 60);
-                    $rst['token'] = $token;
-                    break;
-                }
-                $rst['used'] += 1;
-            }
-        }
-        $this->responseJson($rst);
+        $rst['data']['token'] = $token;
+        if ($token)
+            $this->responseJsonSucc($rst);
+        else
+            $this->responseJsonFail($rst);
     }
 
-    private function getToken ($pan)
+    private function setToken($accesstoken) {
+        
+        $pan = $this->redis->get(HceClient::accessTokenKey($accesstoken));
+        if (!$pan) {
+            return false;
+        }
+        
+        $token = false;
+        while (True) {
+            $token = $this->gencode16();
+            if ($this->redis->setnx($this->tokenKey($token), $pan)) {
+                $this->redis->setTimeout($this->tokenKey($token), 60);
+                break;
+            }
+            $this->logD('token', 'confilict');
+        }
+        return $token;
+    }
+    
+    private function tokenKey($token)
     {
-        return mt_rand(100, 105) . $pan . 'xxx';
+        return 'token:' . $token;
     }
 
     private function performanceAction ()
@@ -82,49 +98,17 @@ class TokenController extends ResponseController
     }
 
     /**
-     * 生成核销码
+     * 生成16位基于时间的数字
      *
-     * 核销码是36进制的8位数
-     * 前3位是天数，中间4位是随机数，最后1位是校验码
+     * 开头是00001，2位时间（秒），中间8位是随机数，最后1位是校验码
      *
      * @return String 8位核销码
      */
-    private static function generateCode ()
+    public static function gencode16()
     {
-        $days = intval(time() / (24 * 3600)) % (36 * 36 * 36);
-        $code = '';
-        $array = array();
-        for ($i = 0; $i < 3; $i ++) {
-            $array[$i] = $days % 36;
-            $code .= self::toBase36Digit($array[$i]);
-            $days = intval($days / 36);
-        }
-        for ($i = 3; $i < 7; $i ++) {
-            $array[$i] = mt_rand(0, 35);
-            $code .= self::toBase36Digit($array[$i]);
-        }
-        
-        $code .= self::toBase36Digit(
-                ($array[0] * 2 + $array[1] * 5 + $array[2] * 8 + $array[3] * 3 +
-                         $array[4] * 7 + $array[5] * 4 + $array[6] * 6) % 36);
-        return $code;
-    }
-
-    /**
-     *
-     * @param
-     *            Integer num 0~35
-     * @return String '0'~'9','a'~'z'
-     */
-    private static function toBase36Digit ($num)
-    {
-        if ($num < 10) {
-            return chr(ord('0') + $num);
-        }
-        $num = $num - 10;
-        if ($num < 26) {
-            return chr(ord('a') + $num);
-        }
-        return '';
+        $data = array(0,0,0);
+        $sec = time() % 100;
+        $rand = mt_rand(0, 99999999);
+        return sprintf("00001%02d%08d%1d", $sec, $rand, ($rand + $sec) / 77 % 10);
     }
 }
