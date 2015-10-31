@@ -2,7 +2,6 @@
 namespace Dlp\Controllers;
 use \Dlp\Models\HceUser;
 use \Dlp\Models\HceClient;
-use \Dlp\Plugins\StrRand;
 
 class HceController extends ResponseController
 {
@@ -11,12 +10,7 @@ class HceController extends ResponseController
      */
     public function indexAction ()
     {
-        $this->view->disable();
-        $rst = array();
-        $rst['rand'] = StrRand::rand(81);
-        $rst['code8'] = StrRand::gencode8();
-        
-        $this->responseJson($rst);
+
     }
 
     /**
@@ -52,11 +46,12 @@ class HceController extends ResponseController
         $rst = array();
         if ($this->getUserClient($productno, $imei) == true) {
             $this->user->state = $state;
+            $this->client->auth = $state;
             $this->client->sessionkey = $sessionkey;
             if ($this->updateUserClient() == true) {
                 $rst['data']['accesstoken'] = $this->client->access_token;
                 $rst['data']['state'] = $this->user->state;
-                $rst['data']['count'] = HceClient::count("user_id = " . $this->user->id);
+                $rst['data']['count'] = $this->countClients();
                 $this->responseJsonSucc($rst);
                 return;
             }
@@ -91,7 +86,7 @@ class HceController extends ResponseController
             if ($this->updateClient() == true) {
                 $rst['data']['accesstoken'] = $this->client->access_token;
                 $rst['data']['state'] = $this->user->state;
-                $rst['data']['count'] = HceClient::count("user_id = " . $this->user->id);
+                $rst['data']['auth'] = $this->client->auth;
                 $this->responseJsonSucc($rst);
                 return;
             }
@@ -101,31 +96,23 @@ class HceController extends ResponseController
     }
 
     
-    public function manageAction ()
+    public function adminAction ()
     {
-        $productno = $this->request->get("productno");
-    
-        if (!$productno) {
-            $this->responseJsonFail(array('desc' => '参数不完整'));
-            return;
-        }
-
-        $rst = array();   
-        $user = HceUser::getUser($productno);
-        if($user && $user->state) {
-            $clients = HceClient::find("user_id = " . $user->id);
-            $rst['data']['count'] = count($clients);
-            $i = 0;
-            foreach($clients as $c) {
-                $rst['data']['#' . $i]['access_token'] = $c->access_token;
-                $rst['data']['#' . $i]['imei'] = $c->imei;
-                $i++;
-            }
-        }
-    
-        $this->responseJsonSucc($rst);
+        $this->view->setVar("users", HceUser::find());
+        $this->view->setVar("clients", HceClient::find());
     }
 
+    private function countClients() 
+    {
+        $count = 0;
+        if ($this->user->id) {
+            $count = HceClient::count(array(
+                "user_id = ?0 AND auth = 1",
+                "bind" => array($this->user->id)));
+        }
+        return $count;
+    }
+    
     private function updateClient ()
     {
         // update accesstoken, old one timeout 10s, if close, delete it

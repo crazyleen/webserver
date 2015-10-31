@@ -10,6 +10,7 @@ class HceClient extends TimeModel {
     public $sessionkey;
     public $imei;   //设备
     public $access_token; //用户的一个登录
+    public $auth; //用户的一个登录
     
     public function initialize() {
         parent::initialize();
@@ -45,6 +46,7 @@ class HceClient extends TimeModel {
             }
             $m->user_id = $uid;
             $m->imei = $imei;
+            $m->auth = 0;
             $m->makeAccessToken();
             $m->save();
         }
