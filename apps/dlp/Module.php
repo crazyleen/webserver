@@ -47,7 +47,7 @@ class Module implements \Phalcon\Mvc\ModuleDefinitionInterface {
             $view = new \Phalcon\Mvc\View();
             $view->setViewsDir('../apps/dlp/views');
             $view->registerEngines(array(
-                '.volt' => '\Phalcon\Mvc\View\Engine\Volt'
+                '.phtml' => '\Phalcon\Mvc\View\Engine\Volt'
             ));  
             return $view;
         });       
