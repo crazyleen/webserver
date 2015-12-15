@@ -25,7 +25,7 @@ class TokenController extends ResponseController
     {
         // TODO: ip white list
         $token = $this->request->get("token");
-        $pan = getPAN($token);
+        $pan = $this->getPAN($token);
         
         if ($pan)
             $this->logI('POSP', 'PAN:' . $pan);
